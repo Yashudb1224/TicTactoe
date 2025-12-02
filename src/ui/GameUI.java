@@ -1,160 +1,255 @@
 package ui;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
-import java.util.Random;
-
 import backend.UserManager;
 import backend.User;
+import backend.GameManager;
 
 public class GameUI extends JFrame {
 
     private JButton[] buttons = new JButton[9];
-    private boolean playerTurn = true; // player = X, computer = O
+    private boolean playerTurn = true;
 
     private UserManager userManager;
     private User currentUser;
-
-    private Random random = new Random();
+    private GameManager gameManager;
+    private JLabel statusLabel;
 
     public GameUI(UserManager userManager, User currentUser) {
         this.userManager = userManager;
         this.currentUser = currentUser;
+        this.gameManager = new GameManager();
 
-        setTitle("Tic Tac Toe");
-        setSize(420, 500);
+        setTitle("Tic Tac Toe - Unbeatable AI");
+        setSize(500, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         setResizable(false);
 
-        JPanel main = new JPanel();
-        main.setLayout(new BorderLayout());
-        main.setBackground(Color.WHITE);
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.setBackground(new Color(18, 18, 18));
 
-        JLabel label = new JLabel("Tic Tac Toe", SwingConstants.CENTER);
-        label.setFont(new Font("SansSerif", Font.BOLD, 26));
-        label.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
-        main.add(label, BorderLayout.NORTH);
+        // Header Panel
+        JPanel headerPanel = new JPanel();
+        headerPanel.setBackground(new Color(18, 18, 18));
+        headerPanel.setBorder(new EmptyBorder(20, 30, 10, 30));
+        headerPanel.setLayout(new BoxLayout(headerPanel, BoxLayout.Y_AXIS));
 
-        JPanel grid = new JPanel();
-        grid.setLayout(new GridLayout(3, 3));
-        grid.setBackground(Color.WHITE);
+        JLabel titleLabel = new JLabel("Tic Tac Toe");
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 32));
+        titleLabel.setForeground(new Color(99, 102, 241));
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        Font font = new Font("SansSerif", Font.BOLD, 50);
+        statusLabel = new JLabel("Your turn - Place X");
+        statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
+        statusLabel.setForeground(new Color(156, 163, 175));
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        statusLabel.setBorder(new EmptyBorder(10, 0, 0, 0));
+
+        headerPanel.add(titleLabel);
+        headerPanel.add(statusLabel);
+
+        // Game Grid
+        JPanel gridPanel = new JPanel();
+        gridPanel.setLayout(new GridLayout(3, 3, 10, 10));
+        gridPanel.setBackground(new Color(18, 18, 18));
+        gridPanel.setBorder(new EmptyBorder(20, 30, 20, 30));
 
         for (int i = 0; i < 9; i++) {
             JButton btn = new JButton("");
-            btn.setFont(font);
+            btn.setFont(new Font("SansSerif", Font.BOLD, 60));
             btn.setFocusPainted(false);
-            btn.setBackground(new Color(230, 230, 230));
+            btn.setBackground(new Color(31, 41, 55));
+            btn.setForeground(new Color(229, 231, 235));
+            btn.setBorder(BorderFactory.createLineBorder(new Color(55, 65, 81), 2));
+            btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
             int index = i;
+
+            btn.addMouseListener(new java.awt.event.MouseAdapter() {
+                public void mouseEntered(java.awt.event.MouseEvent evt) {
+                    if (btn.getText().equals("") && playerTurn) {
+                        btn.setBackground(new Color(45, 55, 72));
+                    }
+                }
+                public void mouseExited(java.awt.event.MouseEvent evt) {
+                    if (btn.getText().equals("")) {
+                        btn.setBackground(new Color(31, 41, 55));
+                    }
+                }
+            });
 
             btn.addActionListener(e -> {
                 if (btn.getText().equals("") && playerTurn) {
                     btn.setText("X");
+                    btn.setForeground(new Color(99, 102, 241));
+                    btn.setBackground(new Color(31, 41, 55));
                     playerTurn = false;
+                    statusLabel.setText("Computer is thinking...");
+
+                    gameManager.playerMove(index / 3, index % 3);
 
                     if (checkGame()) return;
 
-                    computerMove();
+                    Timer timer = new Timer(500, evt -> {
+                        computerMove();
+                        statusLabel.setText("Your turn - Place X");
+                    });
+                    timer.setRepeats(false);
+                    timer.start();
                 }
             });
 
             buttons[i] = btn;
-            grid.add(btn);
+            gridPanel.add(btn);
         }
 
-        main.add(grid, BorderLayout.CENTER);
+        // Bottom Panel
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setBackground(new Color(18, 18, 18));
+        bottomPanel.setBorder(new EmptyBorder(10, 30, 30, 30));
+        bottomPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 0));
 
-        JButton backBtn = new JButton("Back");
-        backBtn.setBackground(new Color(160, 20, 20));
-        backBtn.setForeground(Color.WHITE);
-        backBtn.setFocusPainted(false);
+        JButton resetBtn = createStyledButton("New Game", new Color(139, 92, 246), new Color(124, 58, 237));
+        JButton backBtn = createStyledButton("Back", new Color(239, 68, 68), new Color(220, 38, 38));
+
+        resetBtn.addActionListener(e -> resetGame());
 
         backBtn.addActionListener(e -> {
             dispose();
             new DashboardUI(userManager, currentUser);
         });
 
-        JPanel bottom = new JPanel();
-        bottom.setBackground(Color.WHITE);
-        bottom.add(backBtn);
+        bottomPanel.add(resetBtn);
+        bottomPanel.add(backBtn);
 
-        main.add(bottom, BorderLayout.SOUTH);
+        mainPanel.add(headerPanel, BorderLayout.NORTH);
+        mainPanel.add(gridPanel, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 
-        add(main);
+        add(mainPanel);
         setVisible(true);
     }
 
     private void computerMove() {
-        int index;
-
-        do {
-            index = random.nextInt(9);
-        } while (!buttons[index].getText().equals(""));
+        int[] move = gameManager.computerMove();
+        int index = move[0] * 3 + move[1];
 
         buttons[index].setText("O");
-
+        buttons[index].setForeground(new Color(239, 68, 68));
+        buttons[index].setBackground(new Color(31, 41, 55));
         playerTurn = true;
 
         checkGame();
     }
 
     private boolean checkGame() {
-        String winner = getWinner();
+        char winner = gameManager.checkWinner();
 
-        if (winner != null) {
-            if (winner.equals("X")) {
+        if (winner != ' ') {
+            highlightWinner();
+            if (winner == 'X') {
                 userManager.updateWin(currentUser);
-                showEnd("You Win! +3 points");
+                showStyledEnd("🎉 You Win!", "Congratulations! +3 points");
             } else {
                 userManager.updateLoss(currentUser);
-                showEnd("You Lose! -1 point");
+                showStyledEnd("😔 You Lose!", "Better luck next time! -1 point");
             }
             return true;
         }
 
-        // Draw condition
-        if (isBoardFull()) {
+        if (gameManager.isDraw()) {
             userManager.updateDraw(currentUser);
-            showEnd("Draw! +1 point");
+            showStyledEnd("🤝 Draw!", "Well played! +1 point");
             return true;
         }
 
         return false;
     }
 
-    private void showEnd(String message) {
-        JOptionPane.showMessageDialog(this, message);
-
-        dispose();
-        new DashboardUI(userManager, currentUser);
-    }
-
-    private boolean isBoardFull() {
-        for (JButton b : buttons) {
-            if (b.getText().equals("")) return false;
-        }
-        return true;
-    }
-
-    private String getWinner() {
-        int[][] winConditions = {
-                {0,1,2},{3,4,5},{6,7,8}, // rows
-                {0,3,6},{1,4,7},{2,5,8}, // cols
-                {0,4,8},{2,4,6}          // diagonals
-        };
-
-        for (int[] wc : winConditions) {
-            String a = buttons[wc[0]].getText();
-            String b = buttons[wc[1]].getText();
-            String c = buttons[wc[2]].getText();
-
-            if (!a.equals("") && a.equals(b) && b.equals(c)) {
-                return a;
+    private void highlightWinner() {
+        Timer timer = new Timer(100, null);
+        timer.addActionListener(e -> {
+            for (JButton btn : buttons) {
+                if (!btn.getText().equals("")) {
+                    Color current = btn.getBackground();
+                    if (current.equals(new Color(31, 41, 55))) {
+                        btn.setBackground(new Color(55, 65, 81));
+                    } else {
+                        btn.setBackground(new Color(31, 41, 55));
+                    }
+                }
             }
+        });
+        timer.setRepeats(true);
+        timer.start();
+
+        Timer stopTimer = new Timer(1000, e -> timer.stop());
+        stopTimer.setRepeats(false);
+        stopTimer.start();
+    }
+
+    private void resetGame() {
+        gameManager.resetBoard();
+        for (JButton btn : buttons) {
+            btn.setText("");
+            btn.setBackground(new Color(31, 41, 55));
+            btn.setEnabled(true);
         }
-        return null;
+        playerTurn = true;
+        statusLabel.setText("Your turn - Place X");
+    }
+
+    private void showStyledEnd(String title, String message) {
+        Timer timer = new Timer(1200, e -> {
+            UIManager.put("OptionPane.background", new Color(31, 41, 55));
+            UIManager.put("Panel.background", new Color(31, 41, 55));
+            UIManager.put("OptionPane.messageForeground", new Color(229, 231, 235));
+            
+            int choice = JOptionPane.showOptionDialog(
+                this,
+                message,
+                title,
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.INFORMATION_MESSAGE,
+                null,
+                new Object[]{"Play Again", "Dashboard"},
+                "Play Again"
+            );
+
+            if (choice == 0) {
+                resetGame();
+            } else {
+                dispose();
+                new DashboardUI(userManager, currentUser);
+            }
+        });
+        timer.setRepeats(false);
+        timer.start();
+    }
+
+    private JButton createStyledButton(String text, Color bgColor, Color hoverColor) {
+        JButton button = new JButton(text);
+        button.setPreferredSize(new Dimension(150, 45));
+        button.setFont(new Font("SansSerif", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBackground(bgColor);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(hoverColor);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
+        
+        return button;
     }
 }
