@@ -1,6 +1,8 @@
 package backend;
 
-public class User {
+import java.io.Serializable;
+
+public class User implements Serializable {
     private String username;
     private String password;
     private int wins;
@@ -25,19 +27,25 @@ public class User {
     public int getDraws() { return draws; }
     public int getPoints() { return points; }
 
-    public void addWin() {
+    public void addWin(int pointsToAdd) {
         wins++;
-        points += 3;
+        points += pointsToAdd;
     }
 
     public void addLoss() {
         losses++;
         points -= 1;
-        if (points < 0) points = 0;
     }
 
-    public void addDraw() {
+    public void addDraw(int pointsToAdd) {
         draws++;
-        points += 1;
+        points += pointsToAdd;
+    }
+
+    public void setStats(int wins, int losses, int draws, int points) {
+        this.wins = wins;
+        this.losses = losses;
+        this.draws = draws;
+        this.points = points;
     }
 }

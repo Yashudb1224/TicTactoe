@@ -8,8 +8,10 @@ public class GameManager {
     private final char player = 'X';
     private final char computer = 'O';
     private Random random;
+    private String difficulty;
 
-    public GameManager() {
+    public GameManager(String difficulty) {
+        this.difficulty = difficulty;
         board = new char[3][3];
         random = new Random();
         resetBoard();
@@ -29,14 +31,12 @@ public class GameManager {
         return false;
     }
 
-    // UNBEATABLE AI using Minimax Algorithm
     public int[] computerMove() {
         int[] bestMove = findBestMove();
         board[bestMove[0]][bestMove[1]] = computer;
         return bestMove;
     }
 
-    // Minimax algorithm to find the best move
     private int[] findBestMove() {
         int bestScore = Integer.MIN_VALUE;
         int[] bestMove = new int[]{-1, -1};
@@ -60,10 +60,9 @@ public class GameManager {
         return bestMove;
     }
 
-    // Minimax recursive function
     private int minimax(int depth, boolean isMaximizing) {
         char winner = checkWinner();
-        
+
         if (winner == computer) return 10 - depth;
         if (winner == player) return depth - 10;
         if (isDraw()) return 0;
@@ -104,7 +103,7 @@ public class GameManager {
         }
 
         if (same(board[0][0], board[1][1], board[2][2])) return board[0][0];
-        if (same(board[0][2], board[1][1], board[2][0])) return board[1][1];
+        if (same(board[0][2], board[1][1], board[2][0])) return board[0][2];
 
         return ' ';
     }

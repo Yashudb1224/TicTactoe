@@ -16,13 +16,17 @@ public class GameUI extends JFrame {
     private User currentUser;
     private GameManager gameManager;
     private JLabel statusLabel;
+    private String difficulty;
 
-    public GameUI(UserManager userManager, User currentUser) {
+    public GameUI(UserManager userManager, User currentUser, String difficulty) {
         this.userManager = userManager;
         this.currentUser = currentUser;
-        this.gameManager = new GameManager();
+        this.difficulty = difficulty;
+        this.gameManager = new GameManager(difficulty);
 
-        setTitle("Tic Tac Toe - Unbeatable AI");
+        String difficultyColor = getDifficultyColor();
+        
+        setTitle("Tic Tac Toe - " + difficulty + " Mode");
         setSize(500, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
@@ -43,13 +47,19 @@ public class GameUI extends JFrame {
         titleLabel.setForeground(new Color(99, 102, 241));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        JLabel difficultyLabel = new JLabel(difficulty + " Mode • " + getPointsInfo());
+        difficultyLabel.setFont(new Font("SansSerif", Font.BOLD, 14));
+        difficultyLabel.setForeground(getDifficultyAccentColor());
+        difficultyLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        difficultyLabel.setBorder(new EmptyBorder(5, 0, 5, 0));
+
         statusLabel = new JLabel("Your turn - Place X");
         statusLabel.setFont(new Font("SansSerif", Font.PLAIN, 15));
         statusLabel.setForeground(new Color(156, 163, 175));
         statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        statusLabel.setBorder(new EmptyBorder(10, 0, 0, 0));
 
         headerPanel.add(titleLabel);
+        headerPanel.add(difficultyLabel);
         headerPanel.add(statusLabel);
 
         // Game Grid
@@ -120,7 +130,7 @@ public class GameUI extends JFrame {
 
         backBtn.addActionListener(e -> {
             dispose();
-            new DashboardUI(userManager, currentUser);
+            new DifficultySelectionUI(userManager, currentUser);
         });
 
         bottomPanel.add(resetBtn);
@@ -152,8 +162,9 @@ public class GameUI extends JFrame {
         if (winner != ' ') {
             highlightWinner();
             if (winner == 'X') {
-                userManager.updateWin(currentUser);
-                showStyledEnd("🎉 You Win!", "Congratulations! +3 points");
+                int points = getWinPoints();
+                userManager.updateWin(currentUser, points);
+                showStyledEnd("🎉 You Win!", "Congratulations! +" + points + " points");
             } else {
                 userManager.updateLoss(currentUser);
                 showStyledEnd("😔 You Lose!", "Better luck next time! -1 point");
@@ -162,12 +173,53 @@ public class GameUI extends JFrame {
         }
 
         if (gameManager.isDraw()) {
-            userManager.updateDraw(currentUser);
-            showStyledEnd("🤝 Draw!", "Well played! +1 point");
+            int points = getDrawPoints();
+            userManager.updateDraw(currentUser, points);
+            showStyledEnd("🤝 Draw!", "Well played! " + (points > 0 ? "+" + points + " points" : "0 points"));
             return true;
         }
 
         return false;
+    }
+
+    private int getWinPoints() {
+        switch (difficulty) {
+            case "Easy": return 1;
+            case "Medium": return 3;
+            case "Hard": return 5;
+            default: return 3;
+        }
+    }
+
+    private int getDrawPoints() {
+        return 0; // No points for draw as requested
+    }
+
+    private String getPointsInfo() {
+        switch (difficulty) {
+            case "Easy": return "Win: +1";
+            case "Medium": return "Win: +3";
+            case "Hard": return "Win: +5";
+            default: return "";
+        }
+    }
+
+    private Color getDifficultyAccentColor() {
+        switch (difficulty) {
+            case "Easy": return new Color(16, 185, 129);
+            case "Medium": return new Color(251, 191, 36);
+            case "Hard": return new Color(239, 68, 68);
+            default: return new Color(99, 102, 241);
+        }
+    }
+
+    private String getDifficultyColor() {
+        switch (difficulty) {
+            case "Easy": return "#10b981";
+            case "Medium": return "#fbbf24";
+            case "Hard": return "#ef4444";
+            default: return "#6366f1";
+        }
     }
 
     private void highlightWinner() {

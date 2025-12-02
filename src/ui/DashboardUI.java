@@ -71,9 +71,10 @@ public class DashboardUI extends JFrame {
         JButton logoutBtn = createStyledButton("Logout", new Color(239, 68, 68), new Color(220, 38, 38));
         logoutBtn.setAlignmentX(Component.CENTER_ALIGNMENT);
 
+        // UPDATED: Now opens difficulty selection instead of going directly to game
         playBtn.addActionListener(e -> {
             dispose();
-            new GameUI(userManager, currentUser);
+            new DifficultySelectionUI(userManager, currentUser);
         });
 
         rankBtn.addActionListener(e -> new RankingUI(userManager));
