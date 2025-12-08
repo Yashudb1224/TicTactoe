@@ -75,18 +75,22 @@ public class LoginUI extends JFrame {
             String p = new String(passField.getPassword());
 
             if (u.isEmpty() || p.isEmpty()) {
-                showStyledMessage(this, "Please fill in all fields", "Error", JOptionPane.ERROR_MESSAGE);
+                showStyledDialog(this, "Error", "Please fill in all fields", new Color(239, 68, 68));
                 return;
             }
 
             User user = userManager.login(u, p);
 
             if (user != null) {
-                showStyledMessage(this, "Login successful!", "Success", JOptionPane.INFORMATION_MESSAGE);
-                dispose();
-                new DashboardUI(userManager, user);
+                showStyledDialog(this, "✓ Success", "Welcome back, " + u + "!", new Color(16, 185, 129));
+                Timer timer = new Timer(1000, evt -> {
+                    dispose();
+                    new DashboardUI(userManager, user);
+                });
+                timer.setRepeats(false);
+                timer.start();
             } else {
-                showStyledMessage(this, "Invalid username or password", "Error", JOptionPane.ERROR_MESSAGE);
+                showStyledDialog(this, "Error", "Invalid username or password", new Color(239, 68, 68));
             }
         });
 
@@ -166,10 +170,55 @@ public class LoginUI extends JFrame {
         return button;
     }
 
-    private void showStyledMessage(Component parent, String message, String title, int messageType) {
-        UIManager.put("OptionPane.background", new Color(31, 41, 55));
-        UIManager.put("Panel.background", new Color(31, 41, 55));
-        UIManager.put("OptionPane.messageForeground", new Color(229, 231, 235));
-        JOptionPane.showMessageDialog(parent, message, title, messageType);
+    private void showStyledDialog(Component parent, String title, String message, Color accentColor) {
+        JDialog dialog = new JDialog((Frame) SwingUtilities.getWindowAncestor(parent), title, true);
+        dialog.setSize(350, 200);
+        dialog.setLocationRelativeTo(parent);
+        dialog.setResizable(false);
+
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BorderLayout());
+        mainPanel.setBackground(new Color(18, 18, 18));
+        mainPanel.setBorder(new EmptyBorder(25, 25, 25, 25));
+
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(new Color(18, 18, 18));
+
+        JLabel titleLabel = new JLabel(title);
+        titleLabel.setFont(new Font("SansSerif", Font.BOLD, 24));
+        titleLabel.setForeground(accentColor);
+        titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel messageLabel = new JLabel(message);
+        messageLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        messageLabel.setForeground(new Color(229, 231, 235));
+        messageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        messageLabel.setBorder(new EmptyBorder(15, 0, 0, 0));
+
+        contentPanel.add(titleLabel);
+        contentPanel.add(messageLabel);
+
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(18, 18, 18));
+        buttonPanel.setBorder(new EmptyBorder(20, 0, 0, 0));
+
+        JButton okButton = new JButton("OK");
+        okButton.setPreferredSize(new Dimension(120, 40));
+        okButton.setFont(new Font("SansSerif", Font.BOLD, 13));
+        okButton.setForeground(Color.WHITE);
+        okButton.setBackground(accentColor);
+        okButton.setFocusPainted(false);
+        okButton.setBorderPainted(false);
+        okButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        okButton.addActionListener(e -> dialog.dispose());
+
+        buttonPanel.add(okButton);
+
+        mainPanel.add(contentPanel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
     }
 }

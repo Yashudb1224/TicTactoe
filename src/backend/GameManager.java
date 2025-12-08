@@ -1,5 +1,6 @@
 package backend;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class GameManager {
@@ -32,9 +33,97 @@ public class GameManager {
     }
 
     public int[] computerMove() {
-        int[] bestMove = findBestMove();
-        board[bestMove[0]][bestMove[1]] = computer;
-        return bestMove;
+        int[] move;
+        
+        switch (difficulty) {
+            case "Easy":
+                move = easyMove();
+                break;
+            case "Medium":
+                move = mediumMove();
+                break;
+            case "Hard":
+                move = hardMove();
+                break;
+            default:
+                move = hardMove();
+                break;
+        }
+        
+        board[move[0]][move[1]] = computer;
+        return move;
+    }
+
+    // Easy: Random moves
+    private int[] easyMove() {
+        ArrayList<int[]> available = new ArrayList<>();
+        
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == ' ') {
+                    available.add(new int[]{i, j});
+                }
+            }
+        }
+        
+        return available.get(random.nextInt(available.size()));
+    }
+
+    // Medium: Try to block player, otherwise random
+    private int[] mediumMove() {
+        // First, check if player is about to win and block
+        int[] blockMove = findBlockingMove();
+        if (blockMove != null) {
+            return blockMove;
+        }
+        
+        // Check if computer can win
+        int[] winMove = findWinningMove();
+        if (winMove != null) {
+            return winMove;
+        }
+        
+        // Otherwise, random move
+        return easyMove();
+    }
+
+    // Hard: Use minimax algorithm
+    private int[] hardMove() {
+        return findBestMove();
+    }
+
+    private int[] findBlockingMove() {
+        // Check if player is about to win and block
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == ' ') {
+                    board[i][j] = player;
+                    if (checkWinner() == player) {
+                        board[i][j] = ' ';
+                        return new int[]{i, j};
+                    }
+                    board[i][j] = ' ';
+                }
+            }
+        }
+        return null;
+    }
+
+    private int[] findWinningMove() {
+        // Check if computer can win in next move
+        for (int i = 0; i < 3; i++) {
+            for (int j = 0; j < 3; j++) {
+                if (board[i][j] == ' ') {
+                    board[i][j] = computer;
+                    if (checkWinner() == computer) {
+                        board[i][j] = ' ';
+                        return new int[]{i, j};
+                    }
+                    board[i][j] = ' ';
+                }
+            }
+        }
+        return null;
     }
 
     private int[] findBestMove() {

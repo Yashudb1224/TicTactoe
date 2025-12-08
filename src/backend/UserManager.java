@@ -32,9 +32,9 @@ public class UserManager {
         return null;
     }
 
-    // Stats updates
-    public void updateWin(User user) {
-        user.addWin(3); // +3 points
+    // Stats updates with custom points
+    public void updateWin(User user, int points) {
+        user.addWin(points);
         saveUsers();
     }
 
@@ -43,8 +43,8 @@ public class UserManager {
         saveUsers();
     }
 
-    public void updateDraw(User user) {
-        user.addDraw(1); // +1 point
+    public void updateDraw(User user, int points) {
+        user.addDraw(points);
         saveUsers();
     }
 

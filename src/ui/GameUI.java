@@ -23,8 +23,6 @@ public class GameUI extends JFrame {
         this.currentUser = currentUser;
         this.difficulty = difficulty;
         this.gameManager = new GameManager(difficulty);
-
-        String difficultyColor = getDifficultyColor();
         
         setTitle("Tic Tac Toe - " + difficulty + " Mode");
         setSize(500, 650);
@@ -164,10 +162,10 @@ public class GameUI extends JFrame {
             if (winner == 'X') {
                 int points = getWinPoints();
                 userManager.updateWin(currentUser, points);
-                showStyledEnd("🎉 You Win!", "Congratulations! +" + points + " points");
+                showStyledDialog("🎉 Victory!", "Congratulations! You won!", "+" + points + " point" + (points > 1 ? "s" : ""), new Color(16, 185, 129));
             } else {
                 userManager.updateLoss(currentUser);
-                showStyledEnd("😔 You Lose!", "Better luck next time! -1 point");
+                showStyledDialog("😢 Defeat", "Better luck next time!", "-1 point", new Color(239, 68, 68));
             }
             return true;
         }
@@ -175,7 +173,7 @@ public class GameUI extends JFrame {
         if (gameManager.isDraw()) {
             int points = getDrawPoints();
             userManager.updateDraw(currentUser, points);
-            showStyledEnd("🤝 Draw!", "Well played! " + (points > 0 ? "+" + points + " points" : "0 points"));
+            showStyledDialog("🤝 Draw!", "Well played!", points > 0 ? ("+" + points + " point" + (points > 1 ? "s" : "")) : "0 points", new Color(251, 191, 36));
             return true;
         }
 
@@ -192,7 +190,7 @@ public class GameUI extends JFrame {
     }
 
     private int getDrawPoints() {
-        return 0; // No points for draw as requested
+        return 0; // No points for draw
     }
 
     private String getPointsInfo() {
@@ -210,15 +208,6 @@ public class GameUI extends JFrame {
             case "Medium": return new Color(251, 191, 36);
             case "Hard": return new Color(239, 68, 68);
             default: return new Color(99, 102, 241);
-        }
-    }
-
-    private String getDifficultyColor() {
-        switch (difficulty) {
-            case "Easy": return "#10b981";
-            case "Medium": return "#fbbf24";
-            case "Hard": return "#ef4444";
-            default: return "#6366f1";
         }
     }
 
@@ -255,32 +244,95 @@ public class GameUI extends JFrame {
         statusLabel.setText("Your turn - Place X");
     }
 
-    private void showStyledEnd(String title, String message) {
+    private void showStyledDialog(String title, String message, String points, Color accentColor) {
         Timer timer = new Timer(1200, e -> {
-            UIManager.put("OptionPane.background", new Color(31, 41, 55));
-            UIManager.put("Panel.background", new Color(31, 41, 55));
-            UIManager.put("OptionPane.messageForeground", new Color(229, 231, 235));
-            
-            int choice = JOptionPane.showOptionDialog(
-                this,
-                message,
-                title,
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.INFORMATION_MESSAGE,
-                null,
-                new Object[]{"Play Again", "Dashboard"},
-                "Play Again"
-            );
+            JDialog dialog = new JDialog(this, title, true);
+            dialog.setSize(400, 280);
+            dialog.setLocationRelativeTo(this);
+            dialog.setResizable(false);
 
-            if (choice == 0) {
+            JPanel mainPanel = new JPanel();
+            mainPanel.setLayout(new BorderLayout());
+            mainPanel.setBackground(new Color(18, 18, 18));
+            mainPanel.setBorder(new EmptyBorder(30, 30, 30, 30));
+
+            // Content Panel
+            JPanel contentPanel = new JPanel();
+            contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+            contentPanel.setBackground(new Color(18, 18, 18));
+
+            JLabel titleLabel = new JLabel(title);
+            titleLabel.setFont(new Font("SansSerif", Font.BOLD, 32));
+            titleLabel.setForeground(accentColor);
+            titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            JLabel messageLabel = new JLabel(message);
+            messageLabel.setFont(new Font("SansSerif", Font.PLAIN, 16));
+            messageLabel.setForeground(new Color(156, 163, 175));
+            messageLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+            messageLabel.setBorder(new EmptyBorder(15, 0, 10, 0));
+
+            JLabel pointsLabel = new JLabel(points);
+            pointsLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
+            pointsLabel.setForeground(accentColor);
+            pointsLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+            contentPanel.add(titleLabel);
+            contentPanel.add(messageLabel);
+            contentPanel.add(pointsLabel);
+
+            // Buttons Panel
+            JPanel buttonsPanel = new JPanel();
+            buttonsPanel.setBackground(new Color(18, 18, 18));
+            buttonsPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 10, 20));
+
+            JButton playAgainBtn = createDialogButton("Play Again", new Color(99, 102, 241), new Color(79, 70, 229));
+            JButton dashboardBtn = createDialogButton("Dashboard", new Color(55, 65, 81), new Color(75, 85, 99));
+
+            playAgainBtn.addActionListener(ev -> {
+                dialog.dispose();
                 resetGame();
-            } else {
+            });
+
+            dashboardBtn.addActionListener(ev -> {
+                dialog.dispose();
                 dispose();
                 new DashboardUI(userManager, currentUser);
-            }
+            });
+
+            buttonsPanel.add(playAgainBtn);
+            buttonsPanel.add(dashboardBtn);
+
+            mainPanel.add(contentPanel, BorderLayout.CENTER);
+            mainPanel.add(buttonsPanel, BorderLayout.SOUTH);
+
+            dialog.add(mainPanel);
+            dialog.setVisible(true);
         });
         timer.setRepeats(false);
         timer.start();
+    }
+
+    private JButton createDialogButton(String text, Color bgColor, Color hoverColor) {
+        JButton button = new JButton(text);
+        button.setPreferredSize(new Dimension(140, 45));
+        button.setFont(new Font("SansSerif", Font.BOLD, 14));
+        button.setForeground(Color.WHITE);
+        button.setBackground(bgColor);
+        button.setFocusPainted(false);
+        button.setBorderPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(hoverColor);
+            }
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
+        
+        return button;
     }
 
     private JButton createStyledButton(String text, Color bgColor, Color hoverColor) {
